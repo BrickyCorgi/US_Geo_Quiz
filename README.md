@@ -1,2 +1,2 @@
 # US_Geo_Quiz
-US Geography Quiz using a SortedDictionary&lt;state, city>
+United States Geography Quiz using a SortedDictionary&lt;state, city>
