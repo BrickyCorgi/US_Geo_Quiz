@@ -28,12 +28,12 @@ namespace Project5_SortedDictionary
         //instantiate a Sorted Dictionary object with state as key and city as value
         private SortedDictionary<String, String> statesDict = new SortedDictionary<string, string>( );
         private StreamReader statesFile;        //initialize streamReader variable for dictionary file
-        private int timeLeft,                   //field for time left in countdown
-                    numAttempts = 0,            //field for number of attempts made
-                    numCorrect = 0;             //field for number of correct answers
+        private int timeLeft,                   //time left in countdown
+                    numIncorrect = 0,           //number of incorrect answers
+                    numCorrect = 0;             //number of correct answers
         private string randomState,             //random state to display for challenge
-                       correctCapital;          //field for correct state capital
-        private Random ran = new Random( );      //instantiate a random object
+                       correctCapital;          //correct state capital
+        private Random ran = new Random( );     //random object used for selecting random state
         private KeyValuePair<string, string> stateCapital;   //key value pair for state and capital
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace Project5_SortedDictionary
         /// for them to choose from and countdown timer to limit the amount of time to answer.
         /// Each question presented increases the number of attempts, and every question answered 
         /// correctly increases the number correct and presents and messagebox saying correct.
-        /// When user clicks end game or exits the window, an exit message with their score is presented
+        /// When user clicks end game or simply exits the window, an exit message with their score is presented
         /// </summary>
         public GeoChallenge( )
         {
@@ -50,14 +50,14 @@ namespace Project5_SortedDictionary
             //instantiate dictionary file streamreader using states.txt
             statesFile = new StreamReader("states.txt");
 
-            try //try to add the two fields from line to dictionary
-            {
+			try //try to parse city and state from text file
+			{
                 while (statesFile.Peek( ) != -1)//while something was read in from states.txt
                 {
                     //read line into fields array, use comma as delimiter for splitting line
                     string[ ] fields = statesFile.ReadLine( ).Split(',');
-                    //add to dictionary, the state as they and the city as the value
-                    statesDict.Add(fields[1], fields[0]);
+					//add to dictionary, key<-state  value<-city
+					statesDict.Add(fields[1], fields[0]);
                 }//end while
             }//end try
             catch (Exception ex)
@@ -92,47 +92,22 @@ namespace Project5_SortedDictionary
         /// </summary>
         private void resetForm( )
         {
-            timeLeft = 15;                      //set time left to be 15 seconds
+			lblNumIncorrect.Text = numIncorrect.ToString();//assign number of attempts to corresponding textbox
+			lblNumCorrect.Text = numCorrect.ToString(); //assign number correct to corresponding textbox
+
+			btnSubmit.Enabled = true;           //re-enable sumbit button
+			timeLeft = 15;                      //set time left to be 15 seconds
             txtTimerCount.Text = "15";          //make time count show 15 for a second before counting down
             capitalsListBox.Enabled = true;     //enable list box
             capitalsListBox.SelectedIndex = 0;  //pre-select the first state capital as default
             countdown.Enabled = true;           //enable timer
             countdown.Start( );                 //start timer 
 
-            numAttempts++;                      //increment total number of attempts
-            lblNumAttempts.Text = numAttempts.ToString( );//assign number of attempts to corresponding textbox
-
             //get another random state capital pair from dictionary of 50 states
             stateCapital = statesDict.ElementAt(ran.Next(50));
             randomState = stateCapital.Key;         //get string for random state name
             lblState.Text = randomState;            //make state label on form the random state
             correctCapital = stateCapital.Value;    //get correctCapital string value
-        }
-
-        /// <summary>
-        /// When a selection is made, the timer is stopped and the
-        /// city selected is compared to the correct answer
-        /// The number of attempts and correct answers is updated
-        /// The listbox controls and countdown timer are disabled
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void capitalsListBox_Click(object sender, EventArgs e)
-        {
-            countdown.Stop( );                  //stop timer
-            capitalsListBox.Enabled = false;    //disable list box controls
-            countdown.Enabled = false;          //disable countdown timer
-
-            //did user select correct capital
-            if (capitalsListBox.SelectedItem.ToString( ) == correctCapital)
-            {
-                MessageBox.Show("Correct!");    
-                numCorrect++;                   //increment number of correct attempts
-            }
-            else
-                MessageBox.Show("Incorrect!");
-
-            lblNumCorrect.Text = numCorrect.ToString( ); //assign number correct to corresponding textbox
         }
 
         /// <summary>
@@ -152,31 +127,88 @@ namespace Project5_SortedDictionary
                 countdown.Stop( );                  //stop timer
                 capitalsListBox.Enabled = false;    //disable list box controls
                 countdown.Enabled = false;          //disable countdown timer
-                MessageBox.Show("Time's up!");
-            }
+				MessageBox.Show("Time's up!" +
+					"\nThe capital of " + randomState + " is " + correctCapital);
+				numIncorrect++;
+			}
         }//end countdown
 
-        /// <summary>
-        /// call on ResetForm to display a random state name 
-        /// and set the timer to begin counting down from 15 seconds
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btnNextQ_Click(object sender, EventArgs e)
-        {
-            resetForm( );       //reset form with new question 
-        }
+		/// <summary>
+		/// When submit is pressed, the timer stops, listbox controls are disabled
+		/// and the currently selected city is compared to the correct answer.
+		/// The corresponding correct/incorrect counter is updated.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void btnSubmit_Click(object sender, EventArgs e)
+		{
+			countdown.Stop();                   //stop timer
+			capitalsListBox.Enabled = false;    //disable list box controls
+			countdown.Enabled = false;          //disable countdown timer
+			btnSubmit.Enabled = false;          //disable sumbit button
 
-        /// <summary>
-        /// Calls on ExitApplication to handle exiting the program
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btnEndGame_Click(object sender, EventArgs e)
-        {
-            //method displays thank you message with score and number of attempted questions
-            ExitApplication( );
-        }
+			//did user select correct capital
+			if (capitalsListBox.SelectedItem.ToString() == correctCapital)
+			{
+				MessageBox.Show("CORRECT!");
+				numCorrect++;                   //increment number of correct attempts
+			}
+			else
+			{
+				MessageBox.Show("\tINCORRECT!" +
+					"\nThe capital of " + randomState + " is " + correctCapital);
+				numIncorrect++;                      //increment total number of attempts
+			}
+
+			lblNumIncorrect.Text = numIncorrect.ToString();//assign number of attempts to corresponding textbox
+			lblNumCorrect.Text = numCorrect.ToString(); //assign number correct to corresponding textbox
+		}
+
+		/// <summary>
+		/// If a letter of the alphabet is entered, advance to the first
+		/// city that begins with that letter, for quicker searching
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void capitalsListBox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+		{
+			if (e.KeyCode < Keys.A || e.KeyCode > Keys.Z)
+				return;         //just return if not a letter of the alphabet
+			else
+			{
+				int index = capitalsListBox.FindString(e.KeyCode.ToString()) - 1;
+				if(index < 0)
+				{
+					capitalsListBox.SelectedIndex = 0;
+				}
+				else
+				{
+					//advance selection to first city that begins with the letter entered at keyboard
+					capitalsListBox.SelectedIndex = index;
+				}
+			}
+		}
+		/// <summary>
+		/// call on ResetForm to display a random state name 
+		/// and set the timer to begin counting down from 15 seconds
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void btnNextQ_Click(object sender, EventArgs e)
+		{
+			resetForm();       //reset form with new question 
+		}
+
+		/// <summary>
+		/// Calls on ExitApplication to handle exiting the program
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void btnEndGame_Click(object sender, EventArgs e)
+		{
+			//method displays thank you message with score and number of attempted questions
+			ExitApplication();
+		}
 
         /// <summary>
         /// Calls on ExitApplication to handle exiting the program
@@ -195,13 +227,23 @@ namespace Project5_SortedDictionary
         /// </summary>
         private void ExitApplication( )
         {
-            double score = ( (double)numCorrect / numAttempts );    //calculate score
+			double score;
+			double total = numCorrect + numIncorrect;
 
-            MessageBox.Show(string.Format("Thank you for playing the State Capital Matching Game!"
-                + "\n\n\tYour score was {0:0.0%} on {1} attempts.", score, numAttempts));
+			if (total == 0)
+			{
+				score = 0;
+			}
+			else
+			{
+				score = numCorrect / total;    //calculate score
+			}
 
-            //gracefully exit application
-            Environment.Exit(0);
+			MessageBox.Show(string.Format("Thank you for playing the State Capital Matching Game!"
+				+ "\n\n\tYour score was {0:0.0%} for {1} questions.", score, numCorrect + numIncorrect));
+
+			//gracefully exit application
+			Environment.Exit(0);
         }
 
     }//end class GeoChallenge() Form
